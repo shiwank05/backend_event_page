@@ -12,30 +12,30 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ Ensure environment variables are loaded
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const { SUPABASE_URL, SUPABASE_KEY } = process.env;
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error("❌ Supabase credentials are missing! Check your .env file.");
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error("❌ Missing Supabase credentials! Check your .env file.");
     process.exit(1);
 }
 
 // ✅ Initialize Supabase Client
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 🟢 Fetch All Events
-app.get("/events", async (req, res) => {
+// ✅ Fetch All Events
+app.get("/api/events", async (req, res) => {
     try {
         const { data, error } = await supabase.from("events").select("*");
         if (error) throw error;
-        res.json(data);
+        res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error fetching events:", error);
+        res.status(500).json({ error: "Failed to fetch events" });
     }
 });
 
-// 🟢 Add New Event
-app.post("/events", async (req, res) => {
+// ✅ Add New Event
+app.post("/api/events", async (req, res) => {
     try {
         const { name, image, description, date, time, location, additionalDetails } = req.body;
 
@@ -48,14 +48,15 @@ app.post("/events", async (req, res) => {
         ]);
 
         if (error) throw error;
-        res.status(201).json(data);
+        res.status(201).json({ message: "Event added successfully", data });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error adding event:", error);
+        res.status(500).json({ error: "Failed to add event" });
     }
 });
 
-// 🟢 Update Event
-app.put("/events/:id", async (req, res) => {
+// ✅ Update Event
+app.put("/api/events/:id", async (req, res) => {
     try {
         const { id } = req.params;
         const { name, image, description, date, time, location, additionalDetails } = req.body;
@@ -65,14 +66,15 @@ app.put("/events/:id", async (req, res) => {
         }).eq("id", id);
 
         if (error) throw error;
-        res.json(data);
+        res.json({ message: "Event updated successfully", data });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error updating event:", error);
+        res.status(500).json({ error: "Failed to update event" });
     }
 });
 
-// 🟢 Delete Event
-app.delete("/events/:id", async (req, res) => {
+// ✅ Delete Event
+app.delete("/api/events/:id", async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -81,25 +83,32 @@ app.delete("/events/:id", async (req, res) => {
 
         res.json({ message: "Event deleted successfully" });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error deleting event:", error);
+        res.status(500).json({ error: "Failed to delete event" });
     }
 });
 
-// 🟢 Get Registrations for an Event
-app.get("/registrations/:event_id", async (req, res) => {
+// ✅ Get Registrations for an Event
+app.get("/api/registrations/:event_id", async (req, res) => {
     try {
         const { event_id } = req.params;
 
         const { data, error } = await supabase.from("registrations").select("*").eq("event_id", event_id);
         if (error) throw error;
 
-        res.json(data);
+        res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Error fetching registrations:", error);
+        res.status(500).json({ error: "Failed to fetch registrations" });
     }
 });
 
-// 🟢 Start Server
+// ✅ Root Route for Testing
+app.get("/", (req, res) => {
+    res.send("🚀 Event Management API is Running!");
+});
+
+// ✅ Start Server
 app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
 });
